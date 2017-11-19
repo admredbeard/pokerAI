@@ -14,6 +14,9 @@ add(Hand, Win_or_loss) :-
 find_and_write(Hand, First, Second, Win_or_loss) :-
   open(First, read, Stream1),
   open(Second, append, Stream2),
+  read(Stream1, X),
+  Total_hands is X + 1,
+  write(Stream2, Total_hands), write(Stream2, '.'), nl(Stream2),
   file_search(Stream1, Stream2, Hand, Win_or_loss),
   close(Stream1),
   close(Stream2).
