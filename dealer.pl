@@ -9,10 +9,10 @@
 
 
 % There are 4 different colors, clubs, diamonds, hearts and spades
-color('C').
-color('D').
-color('H').
-color('S').
+color('c').
+color('d').
+color('h').
+color('s').
 
 % There are 13 different values
 value(14).
