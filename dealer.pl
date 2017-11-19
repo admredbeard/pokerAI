@@ -29,6 +29,8 @@ value(11).
 value(12).
 value(13).
 
+
+
 /*card(Color-,Value-)
 A card is defined by 2 terms, Color and Value*/
 card(Color, Value):-
