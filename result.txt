@@ -1,6 +1,0 @@
-[[card(d,14),card(s,2)],0,0].
-[[card(d,14),card(s,3)],0,0].
-[[card(d,14),card(s,4)],0,0].
-[[card(d,14),card(s,8)],0,0].
-[[card(d,6),card(s,8)],0,0].
-[[card(d,6),card(s,5)],0,0].
