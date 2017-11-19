@@ -12,8 +12,6 @@ handValue('two pair ', 7).
 handValue('a pair ', 8).
 handValue('highest card ', 9).
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%for the preflop stat
 whoWon(Hand1, Hand2, Winner):-
 check(Hand1, FiveBest1, V1),
@@ -24,20 +22,16 @@ winner(V1,V2,Res,FiveBest1,FiveBest2),
 ; Res == tie -> Winner = tie).
 %%%%%%%%%%%%%%%%%%%%%%for the preflop stat
 
-handSort([card(C1,V),card(C2,V)], [card(C1,V),card(C2,V)]) :-
-  char_code(C1, CC1),
-  char_code(C2, CC2),
-  CC1 > CC2.
-handSort([card(C1,V),card(C2,V)], [card(C2,V),card(C1,V)]) :-
-  char_code(C1, CC1),
-  char_code(C2, CC2),
-  CC1 < CC2.
-handSort([card(C1,V1),card(C2,V2)], [card(C1,V1),card(C2,V2)]) :-
+handSort([card(C,V1),card(C,V2)], [hand(suited, V1, V2)]) :-
   V1 > V2.
-handSort([card(C1,V1),card(C2,V2)], [card(C2,V2),card(C1,V1)]) :-
+handSort([card(C,V1),card(C,V2)], [hand(suited, V2, V1)]) :-
   V1 < V2.
-
-
+handSort([card(C1,V1),card(C2,V2)], [hand(unsuited, V1, V2)]) :-
+  C1 \== C2,
+  V1 >= V2.
+handSort([card(C1,V1),card(C2,V2)], [hand(unsuited, V2, V1)]) :-
+  C1 \== C2,
+  V1 < V2.
 
 %Evaluates your hand
 check(L, FiveBest, V):-
