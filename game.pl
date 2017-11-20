@@ -30,8 +30,10 @@ go(Deck, Loop) :-
   whoWon(P1seven,P2seven, Winner),
   handSort(P1, P1Sorted),
   handSort(P2, P2Sorted),  %printtofile(P1,P2,Flop,Turn,River),
-  (Winner == p1 -> add(P1Sorted, win), add(P2Sorted, loss)
-  ;Winner == p2 -> add(P1Sorted, loss), add(P2Sorted, win)
+  file_name(P1Sorted, P1Name),      %find out what the name of the file is
+  file_name(P2Sorted, P2Name),
+  (Winner == p1 -> add(preflop, win, P1Name), add(preflop, loss, P2Name) %only for preflop atm "preflop" can be replaced by anything
+  ;Winner == p2 -> add(preflop, loss, P1Name), add(preflop, win, P2Name)
   ;Winner == tie -> !
   ),
   Y is Loop - 1,

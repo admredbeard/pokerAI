@@ -1,15 +1,26 @@
-:-module(readwrite, [add/2]).
+:-module(readwrite, [add/3, file_name/2]).
 :-use_module(library(file_systems)).
+:-use_module(library(codesio)).
 
-add(Hand, Win_or_loss) :-
-  \+file_exists('txt2.txt'),
-  find_and_write(Hand, 'txt.txt', 'txt2.txt', Win_or_loss),
-  delete_file('txt.txt').
+file_name(This, FileName) :-
+  format_to_codes('~p.txt', [This], Codes),
+  name(FileName, Codes).
 
-add(Hand, Win_or_loss) :-
-  file_exists('txt2.txt'),
-  find_and_write(Hand, 'txt2.txt', 'txt.txt', Win_or_loss),
-  delete_file('txt2.txt').
+add(Hand, Win_or_loss, From) :-
+  file_exists(From),
+  \+file_exists('temp.txt'),
+  find_and_write(Hand, From, 'temp.txt', Win_or_loss),
+  delete_file(From),
+  rename_file('temp.txt', From).
+
+add(Hand, Win_or_loss, From) :-
+  \+file_exists(From),
+  open(From, append, Stream1),
+  format(Stream1, '~d.', [0]),
+  close(Stream1),
+  find_and_write(Hand, From, 'temp.txt', Win_or_loss),
+  delete_file(From),
+  rename_file('temp.txt', From).
 
 find_and_write(Hand, First, Second, Win_or_loss) :-
   open(First, read, Stream1),
