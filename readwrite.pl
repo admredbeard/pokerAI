@@ -8,7 +8,6 @@ file_name(This, FileName) :-
 
 add(Hand, Win_or_loss, From) :-
   file_exists(From),
-  \+file_exists('temp.txt'),
   find_and_write(Hand, From, 'temp.txt', Win_or_loss),
   delete_file(From),
   rename_file('temp.txt', From).
@@ -16,19 +15,29 @@ add(Hand, Win_or_loss, From) :-
 add(Hand, Win_or_loss, From) :-
   \+file_exists(From),
   open(From, append, Stream1),
-  format(Stream1, '~d.', [0]),
+  format(Stream1, 'total_WL(~d,~d).~n', [0,0]),
   close(Stream1),
   find_and_write(Hand, From, 'temp.txt', Win_or_loss),
   delete_file(From),
   rename_file('temp.txt', From).
 
-find_and_write(Hand, First, Second, Win_or_loss) :-
+find_and_write(Hand, First, Second, loss) :-
   open(First, read, Stream1),
   open(Second, append, Stream2),
-  read(Stream1, X),
-  Total_hands is X + 1,
-  write(Stream2, Total_hands), write(Stream2, '.'), nl(Stream2),
-  file_search(Stream1, Stream2, Hand, Win_or_loss),
+  read(Stream1, total_WL(X, Y)),
+  Total_loss is Y + 1,
+  format(Stream2, 'total_WL(~d,~d).~n', [X,Total_loss]),
+  file_search(Stream1, Stream2, Hand, loss),
+  close(Stream1),
+  close(Stream2).
+
+find_and_write(Hand, First, Second, win) :-
+  open(First, read, Stream1),
+  open(Second, append, Stream2),
+  read(Stream1, total_WL(X, Y)),
+  Total_Win is X + 1,
+  format(Stream2, 'total_WL(~d,~d).~n', [Total_Win,Y]),
+  file_search(Stream1, Stream2, Hand, win),
   close(Stream1),
   close(Stream2).
 
@@ -41,10 +50,10 @@ file_search(Stream1, Stream2, Hand, Win_or_loss) :-
     ; write(Stream2, [Hands, X, Y]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, Hand, Win_or_loss)
     ).
 
-file_search(Stream1, Stream2, Hand, win) :-
+file_search(_, Stream2, Hand, win) :-
   write(Stream2, [Hand, 1, 0]), write(Stream2, '.'), nl(Stream2).
 
-file_search(Stream1, Stream2, Hand, loss) :-
+file_search(_, Stream2, Hand, loss) :-
   write(Stream2, [Hand, 0, 1]), write(Stream2, '.'), nl(Stream2).
 
 
