@@ -42,22 +42,52 @@ find_and_write(Hand, First, Second, win) :-
   close(Stream2).
 
 %file_search(+Stream, +Hand, -Lines) uses the stream to find the hand
-file_search(Stream1, Stream2, Hand, Win_or_loss) :-
+file_search(Stream1, Stream2, [Flop, Turn, River], Win_or_loss) :-
   \+at_end_of_stream(Stream1),
   read(Stream1, [Hands, X, Y]),
-  (   Hands == Hand, Win_or_loss = win -> Won is X + 1, write(Stream2, [Hand, Won, Y]), write(Stream2, '.'), nl(Stream2), continued(Stream1, Stream2)
-    ; Hands == Hand, Win_or_loss = loss -> Loss is Y + 1, write(Stream2, [Hand, X, Loss]), write(Stream2, '.'), nl(Stream2), continued(Stream1, Stream2)
-    ; write(Stream2, [Hands, X, Y]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, Hand, Win_or_loss)
+  (   Hands == Flop, Win_or_loss == win -> Won is X + 1, write(Stream2, [Flop, Won, Y]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, [[], Turn, River], Win_or_loss)
+    ; Hands == Flop, Win_or_loss == loss -> Loss is Y + 1, write(Stream2, [Flop, X, Loss]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, [[], Turn, River], Win_or_loss)
+    ; Hands == Turn, Win_or_loss == win -> Won is X + 1, write(Stream2, [Turn, Won, Y]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, [Flop, [], River], Win_or_loss)
+    ; Hands == Turn, Win_or_loss == loss -> Loss is Y + 1, write(Stream2, [Turn, X, Loss]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, [Flop, [], River], Win_or_loss)
+    ; Hands == River, Win_or_loss == win -> Won is X + 1, write(Stream2, [River, Won, Y]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, [Flop, Turn, []], Win_or_loss)
+    ; Hands == River, Win_or_loss == loss -> Loss is Y + 1, write(Stream2, [River, X, Loss]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, [Flop, Turn, []], Win_or_loss)
+    ; write(Stream2, [Hands, X, Y]), write(Stream2, '.'), nl(Stream2), file_search(Stream1, Stream2, [Flop, Turn, River], Win_or_loss)
     ).
 
-file_search(_, Stream2, Hand, win) :-
-  write(Stream2, [Hand, 1, 0]), write(Stream2, '.'), nl(Stream2).
+file_search(S, Stream2, [Flop, Turn, River], Win_or_loss) :-
+  at_end_of_stream(S),
+  continued(S, Stream2, [Flop, Turn, River], Win_or_loss).
 
-file_search(_, Stream2, Hand, loss) :-
-  write(Stream2, [Hand, 0, 1]), write(Stream2, '.'), nl(Stream2).
+continued(_, _, [[],[],[]], _).  
+
+continued(_, Stream2, [Flop, Turn, River], win) :-
+  Flop \== [],
+  write(Stream2, [Flop, 1, 0]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [[], Turn, River], win).
+continued(_, Stream2, [Flop, Turn, River], win) :-
+  Turn \== [],
+  write(Stream2, [Turn, 1, 0]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [Flop, [], River], win).
+continued(_, Stream2, [Flop, Turn, River], win) :-
+  River \== [],
+  write(Stream2, [River, 1, 0]), write(Stream2, '.'), nl(Stream2), !.
 
 
-continued(Stream1, Stream2) :-
+continued(_, Stream2, [Flop, Turn, River], loss) :-
+  Flop \== [],
+  write(Stream2, [Flop, 0, 1]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [[], Turn, River], loss).
+continued(_, Stream2, [Flop, Turn, River], loss) :-
+  Turn \== [],
+  write(Stream2, [Turn, 0, 1]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [Flop, [], River], loss).
+continued(_, Stream2, [Flop, Turn, River], loss) :-
+  River \== [],
+  write(Stream2, [River, 0, 1]), write(Stream2, '.'), nl(Stream2), !.
+
+
+file_search(Stream1, Stream2, [[],[],[]], _) :-
+  \+at_end_of_stream(Stream1),
   repeat,
   read(Stream1, X),
   write(Stream2, X), write(Stream2, '.'), nl(Stream2),

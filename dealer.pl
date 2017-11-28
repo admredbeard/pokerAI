@@ -1,7 +1,7 @@
 ﻿
 :-module(dealer,[dealhands/4, dealflop/3, dealturn/3, dealriver/2,
                 createDeck/1, shuffleDeck/2, playersevenCards/5,
-                card/2]).
+                card/2, playersixCards/4, playerfiveCards/3]).
 
 :-use_module(library(random)).
 :-use_module(library(system)).
@@ -59,3 +59,5 @@ dealriver([C2], [_,C2|_]).
 
 %player1Cards(Cards-), gets the asserted predicates and returns them as one list
 playersevenCards([C1, C2], [C3, C4, C5], [C6], [C7], [C1,C2,C3,C4,C5,C6,C7]).
+playersixCards([C1, C2], [C3, C4, C5], [C6], [C1, C2,C3, C4, C5,C6]).
+playerfiveCards([C1,C2], [C3,C4,C5], [C1,C2,C3,C4,C5]).
