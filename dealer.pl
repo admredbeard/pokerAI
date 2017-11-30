@@ -41,8 +41,6 @@ createDeck(Deck):-
   findall(card(X, Y), card(X, Y), Deck). %finds all possible cards and puts in the list L
 
 shuffleDeck(Deck, Shuffled) :-
-  statistics(walltime, [MSSinceStart, _]), %Mera random än now(X) då walltime är i millisekunder?
-  setrand(MSSinceStart), %sets the seed to milliseconds since start * system time in seconds
   random_permutation(Deck, Shuffled).  %shuffles the deck L
 
 % dealtp(Deck+), sets P1cards and P2cards aswell as deck

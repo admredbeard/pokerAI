@@ -4,9 +4,14 @@
 :-use_module(pokerrules).
 :-use_module(readwrite).
 :-use_module(saver).
+:-use_module(library(random)).
+:-use_module(library(system)).
+
 
 start(X) :-
   createDeck(Deck),
+  now(Seed),
+  setrand(Seed),
   statistics(walltime, [Start, _]),
   go(Deck,X),
   statistics(walltime, [End, _]),
@@ -46,4 +51,5 @@ go(Deck, Loop) :-
   ;Winner == tie -> !
   ),
   Y is Loop - 1,
+  !,
   go(Shuffled, Y).
