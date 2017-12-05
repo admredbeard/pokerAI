@@ -1,8 +1,18 @@
-:-module(proBotsOnline, [preflop/2, flop/3, turn/3, river/3]).
+:-module(proBotsOnline, [ai/4, preflop/2, flop/3, turn/3, river/3]).
 
 :-use_module(readwrite).
 :-use_module(pokerrules).
 :-use_module(saver).
+
+ai(Turn, Last_to_act, [Firstact|Table], Newtable):-
+  whattodo(Turn, Act, [Firstact|Table], Newtable),
+  (Firstact == p2 ; Act == raise),
+  Last_to_act = p1.
+ai(Turn, Last_to_act, Table, Table):-
+  Last_to_act = p2.
+
+whattodo(_, raise, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises],[First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, NewRaises]) :-
+  NewRaises is Raises + 1, write('p2raise'),nl.
 
 preflop(Cards, Winrate) :-
   handSort(Cards, P1Sorted),
@@ -15,7 +25,7 @@ preflop(Cards, Winrate) :-
 flop([A,B], [C,D,E], Winrate) :-
   handSort([A,B], P1Sorted),
   file_name(P1Sorted, P1Name),
-  hasgot(flop, [A,B], [A,B,C,D,E], This),
+  whattowrite(1, [A,B], [A,B,C,D,E], _X, _Y, This),
   open(P1Name, read, Stream),
   read(Stream, _),
   find(Stream, This, Winrate),
@@ -24,7 +34,7 @@ flop([A,B], [C,D,E], Winrate) :-
 turn([A,B], [C,D,E,F], Winrate) :-
   handSort([A,B], P1Sorted),
   file_name(P1Sorted, P1Name),
-  hasgot(flop, [A,B], [A,B,C,D,E,F], This),
+  whattowrite(2, [A,B], [A,B,C,D,E,F], _X, _Y, This),
   open(P1Name, read, Stream),
   read(Stream, _),
   find(Stream, This, Winrate),
@@ -33,7 +43,7 @@ turn([A,B], [C,D,E,F], Winrate) :-
 river([A,B], [C,D,E,F,G], Winrate) :-
   handSort([A,B], P1Sorted),
   file_name(P1Sorted, P1Name),
-  hasgot(flop, [A,B], [A,B,C,D,E,F,G], This),
+  whattowrite(3, [A,B], [A,B,C,D,E,F,G], _X, _Y, This),
   open(P1Name, read, Stream),
   read(Stream, _),
   find(Stream, This, Winrate),
@@ -44,45 +54,3 @@ find(Stream, Hand, Winrate) :-
   ( Hand == Hands -> Winrate is W/(W+L)
     ; find(Stream, Hand, Winrate)
     ).
-
-compare(numbers, 2).
-compare(numbers, 3).
-compare(numbers, 6).
-compare(numbers, 7).
-compare(numbers, 8).
-compare(numbers, 9).
-compare(cards, 1).
-compare(cards, 4).
-compare(numbers, 5).
-
-hasgot(flop, [card(S,V),card(S2,V2)], P1seven, Write1) :-
-  check(P1seven, _, Got, Included),
-  flushchance(P1seven, F_cards1, F_Chance, Needed_F),
-  straightchance(P1seven, S_cards1, S_Chance, Needed_S),
-  compare(X, Got),
-  (X == numbers -> Compare1 = [V, V2]
-  ; Compare1 = [card(S,V),card(S2,V2)]),
-  ourCards(Compare1, Included, Num1),
-  ourCards([card(S,V),card(S2,V2)], F_cards1, Num3),
-  ourCards([card(S,V),card(S2,V2)], S_cards1, Num5),
-  Write1 = [1, Got, Num1, F_Chance, Needed_F, Num3, S_Chance, Needed_S, Num5].
-
-hasgot(turn, [card(S,V),card(S2,V2)], P1seven, Write1) :-
-  check(P1seven, _, Got, Included),
-  flushchance(P1seven, F_cards1, F_Chance, Needed_F),
-  straightchance(P1seven, S_cards1, S_Chance, Needed_S),
-  compare(X, Got),
-  (X == numbers -> Compare1 = [V, V2]
-  ; Compare1 = [card(S,V),card(S2,V2)]),
-  ourCards(Compare1, Included, Num1),
-  ourCards([card(S,V),card(S2,V2)], F_cards1, Num3),
-  ourCards([card(S,V),card(S2,V2)], S_cards1, Num5),
-  Write1 = [1, Got, Num1, F_Chance, Needed_F, Num3, S_Chance, Needed_S, Num5].
-
-hasgot(river, [card(S,V),card(S2,V2)], P1seven, Write1) :-
-  check(P1seven, _, Got, Included),
-  compare(X, Got),
-  (X == numbers -> Compare1 = [V, V2]
-  ; Compare1 = [card(S,V),card(S2,V2)]),
-  ourCards(Compare1, Included, Num1),
-  Write1 = [3, Got, Num1].

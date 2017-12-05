@@ -1,6 +1,34 @@
-:-module(readwrite, [add/3, file_name/2]).
+:-module(readwrite, [addtodatabase/5]).
 :-use_module(library(file_systems)).
 :-use_module(library(codesio)).
+:-use_module(pokerrules).
+:-use_module(dealer).
+:-use_module(saver).
+
+addtodatabase(P1, P2, Flop, Turn, River) :-
+  playersevenCards(P1, Flop, Turn, River, P1seven),
+  playersevenCards(P2, Flop, Turn, River, P2seven),
+  playersixCards(P1, Flop, Turn, P1six),
+  playersixCards(P2, Flop, Turn, P2six),
+  playerfiveCards(P1, Flop, P1five),
+  playerfiveCards(P2, Flop, P2five),
+  handSort(P1, P1Sorted),
+  handSort(P2, P2Sorted),
+  whattowrite(3, P1, P1seven, Got, FiveBest, Writeriver1),
+  whattowrite(2, P1, P1six, _A, _B, Writeturn1),
+  whattowrite(1, P1, P1five, _C, _D, Writeflop1),
+  whattowrite(3, P2, P2seven, Got2, FiveBest2, Writeriver2),
+  whattowrite(2, P2, P2six, _E, _F, Writeturn2),
+  whattowrite(1, P2, P2five, _G, _H, Writeflop2),
+  HandP1 = [Writeflop1, Writeturn1, Writeriver1],
+  HandP2 = [Writeflop2, Writeturn2, Writeriver2],
+  winner(Got, Got2, Winner, FiveBest, FiveBest2),
+  file_name(P1Sorted, P1Name),                              %find out what the name of the file is
+  file_name(P2Sorted, P2Name),
+  (Winner == p1 -> add(HandP1, win, P1Name), add(HandP2, loss, P2Name)  %only for preflop atm "preflop" can be replaced by anything
+  ;Winner == p2 -> add(HandP1, loss, P1Name), add(HandP2, win, P2Name)
+  ;Winner == tie -> !
+  ).
 
 file_name(This, FileName) :-
   format_to_codes('~p.txt', [This], Codes),
@@ -58,32 +86,6 @@ file_search(S, Stream2, [Flop, Turn, River], Win_or_loss) :-
   at_end_of_stream(S),
   continued(S, Stream2, [Flop, Turn, River], Win_or_loss).
 
-continued(_, _, [[],[],[]], _).  
-
-continued(_, Stream2, [Flop, Turn, River], win) :-
-  Flop \== [],
-  write(Stream2, [Flop, 1, 0]), write(Stream2, '.'), nl(Stream2),
-  continued(S, Stream2, [[], Turn, River], win).
-continued(_, Stream2, [Flop, Turn, River], win) :-
-  Turn \== [],
-  write(Stream2, [Turn, 1, 0]), write(Stream2, '.'), nl(Stream2),
-  continued(S, Stream2, [Flop, [], River], win).
-continued(_, Stream2, [Flop, Turn, River], win) :-
-  River \== [],
-  write(Stream2, [River, 1, 0]), write(Stream2, '.'), nl(Stream2), !.
-
-
-continued(_, Stream2, [Flop, Turn, River], loss) :-
-  Flop \== [],
-  write(Stream2, [Flop, 0, 1]), write(Stream2, '.'), nl(Stream2),
-  continued(S, Stream2, [[], Turn, River], loss).
-continued(_, Stream2, [Flop, Turn, River], loss) :-
-  Turn \== [],
-  write(Stream2, [Turn, 0, 1]), write(Stream2, '.'), nl(Stream2),
-  continued(S, Stream2, [Flop, [], River], loss).
-continued(_, Stream2, [Flop, Turn, River], loss) :-
-  River \== [],
-  write(Stream2, [River, 0, 1]), write(Stream2, '.'), nl(Stream2), !.
 
 
 file_search(Stream1, Stream2, [[],[],[]], _) :-
@@ -92,3 +94,31 @@ file_search(Stream1, Stream2, [[],[],[]], _) :-
   read(Stream1, X),
   write(Stream2, X), write(Stream2, '.'), nl(Stream2),
   X = end_of_file, !.
+
+
+continued(_, _, [[],[],[]], _).
+
+continued(S, Stream2, [Flop, Turn, River], win) :-
+  Flop \== [],
+  write(Stream2, [Flop, 1, 0]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [[], Turn, River], win).
+continued(S, Stream2, [Flop, Turn, River], win) :-
+  Turn \== [],
+  write(Stream2, [Turn, 1, 0]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [Flop, [], River], win).
+continued(_, Stream2, [_, _, River], win) :-
+  River \== [],
+  write(Stream2, [River, 1, 0]), write(Stream2, '.'), nl(Stream2), !.
+
+
+continued(S, Stream2, [Flop, Turn, River], loss) :-
+  Flop \== [],
+  write(Stream2, [Flop, 0, 1]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [[], Turn, River], loss).
+continued(S, Stream2, [Flop, Turn, River], loss) :-
+  Turn \== [],
+  write(Stream2, [Turn, 0, 1]), write(Stream2, '.'), nl(Stream2),
+  continued(S, Stream2, [Flop, [], River], loss).
+continued(_, Stream2, [_, _, River], loss) :-
+  River \== [],
+  write(Stream2, [River, 0, 1]), write(Stream2, '.'), nl(Stream2), !.

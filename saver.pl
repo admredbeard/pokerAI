@@ -1,5 +1,4 @@
-
-:-module(saver, [whattowrite/7, whattowrite/8, straightchance/4, flushchance/4, ourCards/3]).
+:-module(saver, [whattowrite/6, straightchance/4, flushchance/4, ourCards/3]).
 :-use_module(pokerrules).
 
 compare(numbers, 2).
@@ -12,53 +11,19 @@ compare(cards, 1).
 compare(cards, 4).
 compare(numbers, 5).
 
-whattowrite(3, [card(S,V),card(S2,V2)], [card(S3,V3),card(S4,V4)], P1seven, P2seven, Write1, Write2, Winner) :-
-  whoWon(P1seven, P2seven, Winner, Included, Included2, Got, Got2),
-  sortByNumber(P1seven, Sorted),
+whattowrite(Turn, [card(S,V),card(S2,V2)], Cards, Got, FiveBest, Write1) :-
+  check(Cards, FiveBest, Got, Included),
+  sortByNumber(Cards, Sorted),
   doubleRemove(Sorted, Doubleremoved),
-  flushchance(P1seven, F_cards1, F_Chance, Needed_F),
-  flushchance(P2seven, F_cards2, F_Chance2, Needed_F2),
-  straightchance(Doubleremoved, S_cards1, S_Chance, Needed_S),
-  straightchance(Doubleremoved, S_cards2, S_Chance2, Needed_S2),
+  flushchance(Cards, FlushCards, FlushChance, Needed_F),
+  straightchance(Doubleremoved, StraightCards, StraightChance, Needed_S),
   compare(X, Got),
-  compare(Y, Got2),
   (X == numbers -> Compare1 = [V, V2]
   ; Compare1 = [card(S,V),card(S2,V2)]),
-  (Y == numbers -> Compare2 = [V3, V4]
-  ; Compare2 = [card(S3,V3), card(S4,V4)]),
   ourCards(Compare1, Included, Num1),
-  ourCards(Compare2, Included2, Num2),
-  ourCards([card(S,V),card(S2,V2)], F_cards1, Num3),
-  ourCards([card(S3,V3), card(S4,V4)], F_cards2, Num4),
-  ourCards([V,V2], S_cards1, Num5),
-  ourCards([V3,V4], S_cards2, Num6),
-  Write1 = [3, Got, Num1, F_Chance, Needed_F, Num3, S_Chance, Needed_S, Num5],
-  Write2 = [3, Got2, Num2, F_Chance2, Needed_F2, Num4, S_Chance2, Needed_S2, Num6], !.
-
-whattowrite(Turn, [card(S,V),card(S2,V2)], [card(S3,V3),card(S4,V4)], P1seven, P2seven, Write1, Write2) :-
-  check(P1seven, _, Got, Included),
-  check(P2seven, _, Got2, Included2),
-  sortByNumber(P1seven, Sorted),
-  doubleRemove(Sorted, Doubleremoved),
-  flushchance(P1seven, F_cards1, F_Chance, Needed_F),
-  flushchance(P2seven, F_cards2, F_Chance2, Needed_F2),
-  straightchance(Doubleremoved, S_cards1, S_Chance, Needed_S),
-  straightchance(Doubleremoved, S_cards2, S_Chance2, Needed_S2),
-  compare(X, Got),
-  compare(Y, Got2),
-  (X == numbers -> Compare1 = [V, V2]
-  ; Compare1 = [card(S,V),card(S2,V2)]),
-  (Y == numbers -> Compare2 = [V3, V4]
-  ; Compare2 = [card(S3,V3), card(S4,V4)]),
-  ourCards(Compare1, Included, Num1),
-  ourCards(Compare2, Included2, Num2),
-  ourCards([card(S,V),card(S2,V2)], F_cards1, Num3),
-  ourCards([card(S3,V3), card(S4,V4)], F_cards2, Num4),
-  ourCards([V,V2], S_cards1, Num5),
-  ourCards([V3,V4], S_cards2, Num6),
-  Write1 = [Turn, Got, Num1, F_Chance, Needed_F, Num3, S_Chance, Needed_S, Num5],
-  Write2 = [Turn, Got2, Num2, F_Chance2, Needed_F2, Num4, S_Chance2, Needed_S2, Num6], !.
-
+  ourCards([card(S,V),card(S2,V2)], FlushCards, Num3),
+  ourCards([V,V2], StraightCards, Num5),
+  Write1 = [Turn, Got, Num1, FlushChance, Needed_F, Num3, StraightChance, Needed_S, Num5], !.
 
 %Grants a bonus if there are 4 cards which gives a possible straight chance
 straightchance(Hand, Cards, X, Y) :-

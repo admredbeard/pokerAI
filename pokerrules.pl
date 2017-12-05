@@ -1,4 +1,4 @@
-:-module(pokerrules,[check/4, whoWon/7, handSort/2, sortByNumber/2, doubleRemove/2, samecolor/2]).
+:-module(pokerrules,[check/4, whoWon/7, winner/5, handSort/2, sortByNumber/2, doubleRemove/2, samecolor/2]).
 
 /*Defining the value of the hand, the
 lower the number the better the hand*/
@@ -13,13 +13,10 @@ handValue('a pair ', 8).
 handValue('highest card ', 9).
 
 %%%%%%%%%%%%%%%%%%%%%%for the preflop stat
-whoWon(Hand1, Hand2, Winner, Included, Included2, V1, V2):-
+whoWon(Hand1, Hand2, Res, Included, Included2, V1, V2):-
   check(Hand1, FiveBest1, V1, Included),
   check(Hand2, FiveBest2, V2, Included2),
-  winner(V1,V2,Res,FiveBest1,FiveBest2),
-  (   Res == won -> Winner = p1
-    ; Res == lost -> Winner = p2
-    ; Res == tie -> Winner = tie).
+  winner(V1,V2,Res,FiveBest1,FiveBest2).
 
 %%%%%%%%%%%%%%%%%%%%%%for the preflop stat
 
@@ -57,9 +54,9 @@ checkHand(L, FiveBest, V, Included):-
 /*winner(HandvalueP1+, HandvalueP2+, Decision-, BestcardsP1+, BestcardsP2+)
 Decide a winner*/
 winner(V, V, tie, [],[]):- !.
-winner(V1, V2, won, _, _):-
+winner(V1, V2, p1, _, _):-
   V1 < V2,!.
-winner(V1, V2, lost, _, _):-
+winner(V1, V2, p2, _, _):-
   V1 > V2,!.
 winner(V, V, X, FiveBest1, FiveBest2):-
   tie(FiveBest1,FiveBest2, X), !.
@@ -67,9 +64,9 @@ winner(V, V, X, FiveBest1, FiveBest2):-
 /*tie(Hand1+, Hand2+, decision-)
 If there is a tie, we decide who wins here*/
 tie([], [], tie):- !. %if no player has one card higher than the other its a tie
-tie([V1|_], [V2|_], won):-
+tie([V1|_], [V2|_], p1):-
   V1 > V2,!.
-tie([V1|_], [V2|_], lost):-
+tie([V1|_], [V2|_], p2):-
   V1 < V2,!.
 tie([V|R1], [V|R2], X):-
   tie(R1, R2, X).
@@ -115,9 +112,9 @@ straight_flush(Sorted, [V1,V2,V3,V4,V5], [card(A1,V1),card(A2,V2),card(A3,V3),ca
   existsinstraight(C, Y, [card(A1,V1),card(A2,V2),card(A3,V3),card(A4,V4),card(A5,V5)]).
 
 %checks if the flush exists in the list of straights,
-existsinstraight([A1,A2,A3,A4,A5|R], Straight, [A1,A2,A3,A4,A5]) :-
+existsinstraight([A1,A2,A3,A4,A5|_], Straight, [A1,A2,A3,A4,A5]) :-
   memberchk([A1,A2,A3,A4,A5], Straight), !.
-existsinstraight([H|R], Straight, X) :-
+existsinstraight([_|R], Straight, X) :-
   existsinstraight(R, Straight, X).
 
 
@@ -137,7 +134,7 @@ full_house([card(_,_)|R], V1, 3) :- %checks the upcoming cards
   %flush(Hand+, Flushcardvalues-, value-)
 flush(Hand, [V1,V2,V3,V4,V5], Cards, 4) :-
   samecolor(Hand, Cards),
-  Cards = [card(X,V1),card(X, V2),card(X,V3),card(X,V4),card(X,V5)|R].
+  Cards = [card(X,V1),card(X, V2),card(X,V3),card(X,V4),card(X,V5)|_].
 
 samecolor([card(Suit, V1)|Hand], [card(Suit,V1)|Total]) :-
   findall(card(Suit, V), member(card(Suit, V), Hand), Total),
