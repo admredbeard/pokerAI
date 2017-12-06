@@ -29,8 +29,6 @@ value(11).
 value(12).
 value(13).
 
-
-
 /*card(Color-,Value-)
 A card is defined by 2 terms, Color and Value*/
 card(Color, Value):-
@@ -55,7 +53,7 @@ dealturn([C2], [_,C2|Deck], Deck).
 % dealriver(Deck+), sets river and rest of the deck
 dealriver([C2], [_,C2|_]).
 
-%player1Cards(Cards-), gets the asserted predicates and returns them as one list
+%playerCards(+Cards, -appended), appends 2-4 lists into one.
 playersevenCards([C1, C2], [C3, C4, C5], [C6], [C7], [C1,C2,C3,C4,C5,C6,C7]).
 playersixCards([C1, C2], [C3, C4, C5], [C6], [C1, C2,C3, C4, C5,C6]).
 playerfiveCards([C1,C2], [C3,C4,C5], [C1,C2,C3,C4,C5]).

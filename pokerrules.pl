@@ -1,4 +1,4 @@
-:-module(pokerrules,[check/4, whoWon/7, winner/5, handSort/2, sortByNumber/2, doubleRemove/2, samecolor/2]).
+:-module(pokerrules,[check/4, whoWon/7, winner/5, handSort/2, sortByNumber/2, sortByColor/2, doubleRemove/2, samecolor/2]).
 
 /*Defining the value of the hand, the
 lower the number the better the hand*/
@@ -19,7 +19,6 @@ whoWon(Hand1, Hand2, Res, Included, Included2, V1, V2):-
   winner(V1,V2,Res,FiveBest1,FiveBest2).
 
 %%%%%%%%%%%%%%%%%%%%%%for the preflop stat
-
 handSort([card(C,V1),card(C,V2)], hand(suited, V1, V2)) :-
   V1 > V2.
 handSort([card(C,V1),card(C,V2)], hand(suited, V2, V1)) :-
@@ -131,11 +130,12 @@ full_house([card(_,V2), card(_,V2)|R], [V1,V1,V1,V2,V2], 3) :-  %pair in the fir
 full_house([card(_,_)|R], V1, 3) :- %checks the upcoming cards
   full_house(R, V1, 3).
 
-  %flush(Hand+, Flushcardvalues-, value-)
+%flush(Hand+, Flushcardvalues-, value-)
 flush(Hand, [V1,V2,V3,V4,V5], Cards, 4) :-
   samecolor(Hand, Cards),
   Cards = [card(X,V1),card(X, V2),card(X,V3),card(X,V4),card(X,V5)|_].
 
+%samecolor(+Hand, -Samecolors) checks if there is more then or equal to 3 cards with the same color
 samecolor([card(Suit, V1)|Hand], [card(Suit,V1)|Total]) :-
   findall(card(Suit, V), member(card(Suit, V), Hand), Total),
   length(Total, X),
