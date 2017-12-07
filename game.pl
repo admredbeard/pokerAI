@@ -1,4 +1,3 @@
-
 :-module(game,[start/2]).
 :-use_module(dealer).
 :-use_module(pokerrules).
@@ -82,7 +81,7 @@ event_handler(Turn, Acted, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards,
 
 %event_handler for first player (currently not a computer) setting Acted as p1 and deciding Last_to_act and Stacks depending on playeraction
 event_handler(Turn, _, p1, Table, Everythingelse, Stacks) :-
-  player(Turn, Last_to_act, Table, Newtable),
+  ai(Turn, Last_to_act, Table, Newtable),
   event_handler(Turn, p1, Last_to_act, Newtable, Everythingelse, Stacks).
 
 %event_handler for second player same rules here
@@ -94,11 +93,11 @@ event_handler(Turn, _, p2, Table, Everythingelse, Stacks) :-
 deal(1, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [NewFirst,P1,P2,P1Stack,P2Stack,Flop,Pot,Big,0,0], [Flop|_]):-
   ( First == p1 -> NewFirst = p2
     ; NewFirst = p1),
-    format('Flop: ~w, Pot: ~d, To_call: ~d', [Flop, Pot, To_call]).
-deal(2, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [First,P1,P2,P1Stack,P2Stack,[C1|Cards],Pot,Big,0,0], [_,[C1]|_]) :-
-  write(C1).
-deal(3, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [First,P1,P2,P1Stack,P2Stack,[C1|Cards],Pot,Big,0,0], [_,_,[C1]|_]) :-
-  write(C1).
+    format('Flop: ~w, Pot: ~d, To_call: ~d~n', [Flop, Pot, To_call]).
+deal(2, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [First,P1,P2,P1Stack,P2Stack,[Turn|Cards],Pot,Big,0,0], [_,[Turn]|_]) :-
+  format('Turn: ~w, Pot: ~d, To_call: ~d~n', [Turn, Pot, To_call]).
+deal(3, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [First,P1,P2,P1Stack,P2Stack,[River|Cards],Pot,Big,0,0], [_,_,[River]|_]) :-
+  format('River: ~w, Pot: ~d, To_call: ~d~n', [River, Pot, To_call]).
 %deal 4 is for when all hands are dealt and all actions has been taken
 deal(4, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [First,P1,P2,P1Stack,P2Stack,Cards,Pot,Big,0,0], _).
 
