@@ -30,9 +30,6 @@ handSort([card(C1,V1),card(C2,V2)], hand(unsuited, V2, V1)) :-
   C1 \== C2,
   V1 < V2.
 
-
-
-
 %Evaluates your hand
 check(L, FiveBest, V, Included):-
   sortByNumber(L, Res),

@@ -23,24 +23,24 @@ start(X, Startingtable) :-
   write(Time),
   write(' ms.').
 
-go(_, 0, [P1stack, P2stack, Bigblind, First, Second]) :-
-  format('Player1 has: ~d chips left, Player2 has ~d chips left ~nBigblind is: ~d, and ~w starts to act. ~nDo you want to continue? Write number of hands~n >>', [P1stack, P2stack, Bigblind, First]),
+go(_, 0, [P1Stack, P2Stack, Bigblind, First, Second]) :-
+  format('Player1 has: ~d chips left, Player2 has ~d chips left ~nBigblind is: ~d, and ~w starts to act. ~nDo you want to continue? Write number of hands~n >>', [P1Stack, P2Stack, Bigblind, First]),
   read(X),
-  start(X, [P1stack, P2stack, Bigblind, First, Second]).
+  start(X, [P1Stack, P2Stack, Bigblind, First, Second]).
 
 %just a loop for either the game or adding new hands to the db
 go(Deck, Loop, Oldtable) :-
-  Loop\==0,
-  startgame(Deck, Oldtable, Newtable, NewDeck),
+  Loop \= 0,
+  startgame(Deck, Oldtable, [P1Stack, P2Stack, Bigblind, First, Second], NewDeck),
   %addtodatabase(P1, P2, Flop, Turn, River),
+  IncBlind is Loop  mod 10,
+  (IncBlind == 0 -> NewBigblind is Bigblind + 10;
+  NewBigblind is Bigblind),
   Y is Loop - 1, !,
-  go(NewDeck, Y, Newtable).
+  ( P1Stack == 0 -> format('Gameover, p2 wins! ~n', []),!
+  ; P2Stack == 0 ->  format('Gameover, p1 wins! ~n', []),!
+  ; go(NewDeck, Y, [P1Stack, P2Stack, NewBigblind, First, Second])).
 
-%checks if any of the stacks are 0
-startgame(_, [P1Stack, P2Stack|_], _, _) :-
-  (P1Stack == 0 ; P2Stack == 0),
-  write('gameover'),
-  !.
 %the initialization of the game, shuffling the deck, dealing the cards and setting up the table
 startgame(Deck, [P1Stack, P2Stack, Bigblind, First, Second], [NewP1Stack, NewP2Stack, Bigblind, Second, First], Shuffled) :-
   shuffleDeck(Deck, Shuffled),
@@ -57,21 +57,40 @@ startgame(Deck, [P1Stack, P2Stack, Bigblind, First, Second], [NewP1Stack, NewP2S
   event_handler(1, Second, First, Table, Statics, [NewP1Stack, NewP2Stack]),
   format('p1 ~d, p2 ~d ~n', [NewP1Stack, NewP2Stack]).
 
-%if someone folds the amount in the pot goes to the opponent
-event_handler(_, _, p1fold, [_, _, _, P1Stack, P2Stack, _, Pot, _, To_call, _], _, [P1Stack, NewP2Stack]) :-
-  Amount is Pot + To_call,
-  NewP2Stack is Amount + P2Stack,
-  format('Player 1 folds, Player 2 win: ~d$', [Amount]), !.
-
-event_handler(_, _, p2fold, [_, _, _, P1Stack, P2Stack, _, Pot, _, To_call, _], _, [NewP1Stack, P2Stack]) :-
-  Amount is Pot + To_call,
-  NewP1Stack is Amount + P1Stack,
-  format('Player 2 folds, Player 1 win: ~d$', [Amount]), !.
-
-%if turn is 5 (after the acts after river) we decide a winner
+  %if turn is 5 (after the acts after river) we decide a winner
 event_handler(5, _, _, Table, Statics, [NewP1Stack, NewP2Stack]) :-
   decider(Table, Statics, NewP1Stack, NewP2Stack).
 
+event_handler(Turn, Acted, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Everythingelse, Stacks) :-
+  Acted == Last_to_act,  %checks if it's time to deal out cards that is if both have acted or number of raises are above 4
+  (P1Stack == 0 ; P2Stack == 0),
+  Next is Turn +1,
+  event_handler(Next, Last_to_act, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Everythingelse, Stacks).
+
+event_handler(Turn, Acted, Last_to_act, [First, P1, P2, P1Stack, P2Stack,
+ Cards, Pot, Big, To_call, _], Everythingelse, Stacks) :-
+  (P1Stack == 0 ; P2Stack == 0),
+  Next is Turn +1,
+  event_handler(Next, Acted, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, 4], Everythingelse, Stacks).
+
+
+%if someone folds the amount in the pot goes to the opponent
+event_handler(_, _, p1fold, [_, _, _, P1Stack, P2Stack, _, Pot, _, To_call, _], _, [P1Stack, NewP2Stack]) :-
+  addpercent(bigwin),
+  Amount is Pot + To_call,
+  NewP2Stack is Amount + P2Stack,
+  format('Player 1 folds, Player 2 win: ~d$~n', [Amount]), !.
+
+event_handler(_, _, p2fold, [_, P1, P2, P1Stack, P2Stack, _, Pot, _, To_call, _], [Flop,Turn,River|_], [NewP1Stack, P2Stack]) :-
+  playersevenCards(P1, Flop, Turn, River, P1seven),
+  playersevenCards(P2, Flop, Turn, River, P2seven),
+  whoWon(P1seven, P2seven, Winner, _, _, _, _),
+  ( Winner == p2 -> foldpercent(inc)
+  ; foldpercent(dec)
+  ),
+  Amount is Pot + To_call,
+  NewP1Stack is Amount + P1Stack,
+  format('Player 2 folds, Player 1 win: ~d$~n', [Amount]), !.
 %event_handler(+Turn, +Acted, -Last_to_act, +Table, +Everythingelse, -Stacks)
 event_handler(Turn, Acted, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Everythingelse, Stacks) :-
   (Acted == Last_to_act ; Raises > 4),  %checks if it's time to deal out cards that is if both have acted or number of raises are above 4
@@ -86,7 +105,7 @@ event_handler(Turn, _, p1, Table, Everythingelse, Stacks) :-
 
 %event_handler for second player same rules here
 event_handler(Turn, _, p2, Table, Everythingelse, Stacks) :-
-  bot(Turn, Last_to_act, Table, Newtable),
+  ai2(Turn, Last_to_act, Table, Newtable),
   event_handler(Turn, p2, Last_to_act, Newtable, Everythingelse, Stacks).
 
 %deal(+Num, +Oldtable, -Newtable, +Cards), resets the table and decides who should start, and deals flop/turn/river
@@ -102,13 +121,74 @@ deal(3, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [Fir
 deal(4, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], [First,P1,P2,P1Stack,P2Stack,Cards,Pot,Big,0,0], _).
 
 %decider(+Table, +Static, -NewP1Stack, -NewP2Stack) checks who won and deals the pot to that player
-decider([_,P1,P2,P1Stack,P2Stack,_,Pot,_,_,_], [Flop, Turn, River|_], NewP1Stack, NewP2Stack) :-
+decider([_,P1,P2,P1Stack,P2Stack,_,Pot,Bigblind,_,_], [Flop, Turn, River|_], NewP1Stack, NewP2Stack) :-
   playersevenCards(P1, Flop, Turn, River, P1seven),
   playersevenCards(P2, Flop, Turn, River, P2seven),
   write(P1seven), nl,
   write(P2seven), nl,
   whoWon(P1seven, P2seven, Winner, _, _, _, _),
+  Times is Bigblind*5,
+  (   Pot > Times, Winner == p2 -> addpercent(bigwin)
+    ; Winner == p2 -> addpercent(smallwin)
+    ; Pot < Times, Winner == p1 -> addpercent(bigloss)
+    ; Winner == p1 -> addpercent(smalloss)
+    ; !
+    ),
   (   Winner == p1 -> NewP1Stack is P1Stack + Pot, NewP2Stack is P2Stack, format('Player one Wins~n', [])
     ; Winner == p2 -> NewP2Stack is P2Stack + Pot, NewP1Stack is P1Stack, format('Player two Wins~n', [])
     ; NewP1Stack is P1Stack + Pot / 2, NewP2Stack is P2Stack + Pot / 2, format('It is a tie~n', [])
     ), !.
+
+addpercent(bigwin) :-
+  open('bet.txt', read, Stream),
+  read(Stream, Percent),
+  NewPercent is Percent - 2,
+  close(Stream),
+  open('bet.txt', write, Stream2),
+  write(Stream2, NewPercent), write(Stream2, '.'),
+  close(Stream2).
+
+addpercent(smallwin) :-
+  open('bet.txt', read, Stream),
+  read(Stream, Percent),
+  NewPercent is Percent - 1,
+  close(Stream),
+  open('bet.txt', write, Stream2),
+  write(Stream2, NewPercent), write(Stream2, '.'),
+  close(Stream2).
+
+addpercent(bigloss) :-
+  open('bet.txt', read, Stream),
+  read(Stream, Percent),
+  NewPercent is Percent + 2,
+  close(Stream),
+  open('bet.txt', write, Stream2),
+  write(Stream2, NewPercent), write(Stream2, '.'),
+  close(Stream2).
+
+addpercent(smalloss) :-
+  open('bet.txt', read, Stream),
+  read(Stream, Percent),
+  NewPercent is Percent + 1,
+  close(Stream),
+  open('bet.txt', write, Stream2),
+  write(Stream2, NewPercent), write(Stream2, '.'),
+  close(Stream2).
+
+foldpercent(inc) :-
+  open('fold.txt', read, Stream),
+  read(Stream, Percent),
+  NewPercent is Percent - 1,
+  close(Stream),
+  open('fold.txt', write, Stream2),
+  write(Stream2, NewPercent), write(Stream2, '.'),
+  close(Stream2).
+
+foldpercent(dec) :-
+  open('fold.txt', read, Stream),
+  read(Stream, Percent),
+  NewPercent is Percent + 1,
+  close(Stream),
+  open('fold.txt', write, Stream2),
+  write(Stream2, NewPercent), write(Stream2, '.'),
+  close(Stream2).

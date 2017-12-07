@@ -1,4 +1,4 @@
-:-module(proBotsOnline, [ai/4, player/4, preflop/2, flop/3, turn/3, river/3]).
+:-module(proBotsOnline, [ai2/4, ai/4, player/4, preflop/2, flop/3, turn/3, river/3]).
 :-use_module(readwrite).
 :-use_module(pokerrules).
 :-use_module(saver).
@@ -24,11 +24,40 @@ ai(Turn, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call
   (   Next == 0 -> preflop(P1, Winrate)
     ; flop(Next, P1, Cards, Winrate)
   ),
-  (   Winrate > 0.4 -> bet(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
-    ; Winrate > 0.30 -> actcheck(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+  open('bet.txt', read, Stream1),
+  open('fold.txt', read, Stream2),
+  read(Stream1, Percent),
+  read(Stream2, Fold),
+  close(Stream1),
+  close(Stream2),
+  DoBet is Percent / 10000,
+  DoFold is Fold / 10000,
+  (   Winrate >  DoBet -> bet(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate <  DoBet -> actcheck(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
     ; To_call == 0 ->  actcheck(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
-    ; Winrate < 0.3 ->  fold(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate < DoFold ->  fold(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
   ).
+
+ai2(Turn, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable):-
+  Next is Turn - 1,
+  (   Next == 0 -> preflop(P2, Winrate)
+    ; flop(Next, P2, Cards, Winrate)
+  ),
+  open('bet.txt', read, Stream1),
+  open('fold.txt', read, Stream2),
+  read(Stream1, Percent),
+  read(Stream2, Fold),
+  close(Stream1),
+  close(Stream2),
+  DoBet is Percent / 10000,
+  DoFold is Fold / 10000,
+  (   Winrate >  DoBet -> bet(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate <  DoBet -> actcheck(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; To_call == 0 ->  actcheck(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate < DoFold ->  fold(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+  ).
+
+
 
 whattodo(_, raise, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises],[First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, NewRaises]) :-
   NewRaises is Raises + 1.
@@ -47,7 +76,7 @@ flop(Turn, Hand, Cards, Winrate) :-
   append(Hand, Cards, Total),
   handSort(Hand, P1Sorted),
   readwrite:file_name(P1Sorted, P1Name),
-  whattowrite(Turn, Total, Total, _X, _Y, This),
+  whattowrite(Turn, Hand, Total, _X, _Y, This),
   open(P1Name, read, Stream),
   read(Stream, _),
   find(Stream, This, Winrate),
@@ -60,6 +89,6 @@ find(Stream, Hand, Winrate) :-
   read(Stream, [Hands, W, L]),
   ( Hand == Hands -> Winrate is W/(W+L)
     ; find(Stream, Hand, Winrate)
-    ).
-find(Stream, _, 1) :-
-  at_end_of_stream(Stream).
+    ),
+    !.
+find(_, _, 1).
