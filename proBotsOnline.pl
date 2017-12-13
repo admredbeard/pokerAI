@@ -24,18 +24,12 @@ ai(Turn, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call
   (   Next == 0 -> preflop(P1, Winrate)
     ; flop(Next, P1, Cards, Winrate)
   ),
-  open('bet.txt', read, Stream1),
-  open('fold.txt', read, Stream2),
-  read(Stream1, Percent),
-  read(Stream2, Fold),
-  close(Stream1),
-  close(Stream2),
-  DoBet is Percent / 10000,
-  DoFold is Fold / 10000,
+  DoBet = 0.7,
+  DoFold = 0.25,
   (   Winrate >  DoBet -> bet(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
-    ; Winrate <  DoBet -> actcheck(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate =<  DoBet, Winrate > DoFold -> actcheck(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
     ; To_call == 0 ->  actcheck(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
-    ; Winrate < DoFold ->  fold(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate =< DoFold ->  fold(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
   ).
 
 ai2(Turn, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable):-
@@ -43,24 +37,17 @@ ai2(Turn, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_cal
   (   Next == 0 -> preflop(P2, Winrate)
     ; flop(Next, P2, Cards, Winrate)
   ),
+  %uncomment everything for the ai to learn
   open('bet.txt', read, Stream1),
-  open('fold.txt', read, Stream2),
   read(Stream1, Percent),
-  read(Stream2, Fold),
   close(Stream1),
-  close(Stream2),
-  DoBet is Percent / 10000,
-  DoFold is Fold / 10000,
-  (   Winrate >  DoBet -> bet(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
-    ; Winrate <  DoBet -> actcheck(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+  DoBet is Percent / 100000,
+  DoFold = 0.25,
+  (   Winrate >=  DoBet -> bet(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate <  DoBet, Winrate > DoFold -> actcheck(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
     ; To_call == 0 ->  actcheck(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
-    ; Winrate < DoFold ->  fold(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
+    ; Winrate =< DoFold ->  fold(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
   ).
-
-
-
-whattodo(_, raise, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises],[First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, NewRaises]) :-
-  NewRaises is Raises + 1.
 
 %preflop(+Cards, -Winrate)
 %these predicates work in the same way, it calcylates which name and what values to look for and finds them in the file and returns a winratio determined by the facts in the db

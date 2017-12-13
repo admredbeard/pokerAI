@@ -1,4 +1,4 @@
-:-module(readwrite, [addtodatabase/5]).
+:-module(readwrite, [addtodatabase/5, file_name/2]).
 :-use_module(library(file_systems)).
 :-use_module(library(codesio)).
 :-use_module(pokerrules).
