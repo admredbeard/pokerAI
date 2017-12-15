@@ -32,9 +32,9 @@ go(_, 0, [P1Stack, P2Stack, Bigblind, First, Second]) :-
 go(Deck, Loop, Oldtable) :-
   Loop \= 0,
   startgame(Deck, Oldtable, [P1Stack, P2Stack, Bigblind, First, Second], NewDeck),
-  %addtodatabase(P1, P2, Flop, Turn, River), this one is used when we want to add more hands to the database
-  IncBlind is Loop  mod 100,
-  (IncBlind == 0 -> NewBigblind is Bigblind, addtable(P2Stack) %uncomment to record how it changes its threshold
+  %addtodatabase(Deck, NewDeck), this one is used when we want to add more hands to the database startgame has to be commented away
+  IncBlind is Loop  mod 10,
+  (IncBlind == 0 -> NewBigblind is Bigblind + 20 %,addtable(P2Stack) %uncomment to record how it changes its threshold
   ; NewBigblind is Bigblind),
   Y is Loop - 1, !,
   ( P1Stack == 0 -> format('Gameover, p2 wins! ~n', []),!
@@ -48,6 +48,7 @@ startgame(Deck, [P1Stack, P2Stack, Bigblind, First, Second], [NewP1Stack, NewP2S
   dealflop(Flop, R, Re),
   dealturn(Turn, Re, Res),
   dealriver(River, Res),
+  format('You were dealt ~w~n', [P1]),
   Pot is Bigblind,
   To_call is Bigblind / 2,
   ( First == p1 -> Stack1 is P1Stack - To_call, Stack2 is P2Stack - Bigblind
@@ -94,8 +95,9 @@ event_handler(Turn, Acted, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards,
   event_handler(Next, Second, Firstact, [Firstact|Newtable], Everythingelse, Stacks).
 
 %event_handler for first player (currently not a computer) setting Acted as p1 and deciding Last_to_act and Stacks depending on playeraction
+%use ai/4 when playing vs bot.
 event_handler(Turn, _, p1, Table, Everythingelse, Stacks) :-
-  ai(Turn, Last_to_act, Table, Newtable),
+  player(Turn, Last_to_act, Table, Newtable),
   event_handler(Turn, p1, Last_to_act, Newtable, Everythingelse, Stacks).
 
 %event_handler for second player same rules here
@@ -106,12 +108,12 @@ event_handler(Turn, _, p2, Table, Everythingelse, Stacks) :-
 %deal(+Num, +Oldtable, -Newtable, +Cards), resets the table and decides who should start, and deals flop/turn/river
 deal(1, [First,P1, P2, P1Stack, P2Stack, _, Pot, Big, _, _], [NewFirst,P1,P2,P1Stack,P2Stack,Flop,Pot,Big,0,0], [Flop|_]):-
   ( First == p1 -> NewFirst = p2
-    ; NewFirst = p1).
-  %  format('Flop: ~w, Pot: ~d~n', [Flop, Pot]).
-deal(2, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, _, _], [First,P1,P2,P1Stack,P2Stack,[Turn|Cards],Pot,Big,0,0], [_,[Turn]|_]).% :-
-  %format('Turn: ~w, Pot: ~d~n', [Turn, Pot]).
-deal(3, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, _, _], [First,P1,P2,P1Stack,P2Stack,[River|Cards],Pot,Big,0,0], [_,_,[River]|_]).% :-
-  %format('River: ~w, Pot: ~d~n', [River, Pot]).
+    ; NewFirst = p1),
+  format('Flop: ~w, Pot: ~d~n', [Flop, Pot]).
+deal(2, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, _, _], [First,P1,P2,P1Stack,P2Stack,[Turn|Cards],Pot,Big,0,0], [_,[Turn]|_]) :-
+  format('Turn: ~w, Pot: ~d~n', [Turn, Pot]).
+deal(3, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, _, _], [First,P1,P2,P1Stack,P2Stack,[River|Cards],Pot,Big,0,0], [_,_,[River]|_]) :-
+  format('River: ~w, Pot: ~d~n', [River, Pot]).
 %deal 4 is for when all hands are dealt and all actions has been taken
 deal(4, [First,P1, P2, P1Stack, P2Stack, Cards, Pot, Big, _, _], [First,P1,P2,P1Stack,P2Stack,Cards,Pot,Big,0,0], _).
 
@@ -120,21 +122,14 @@ decider([_,P1,P2,P1Stack,P2Stack,_,Pot,Bigblind,_,_], [Flop, Turn, River|_], New
   playersevenCards(P1, Flop, Turn, River, P1seven),
   playersevenCards(P2, Flop, Turn, River, P2seven),
   whoWon(P1seven, P2seven, Winner, _, _, _, _),
-  Amount is Bigblind*16,
-  (   Pot =< Amount, Winner == p2 -> addpercent(smallwin)
-    ; Pot >= Amount, Winner == p1 -> addpercent(bigloss)
-    ; Winner == p1 -> addpercent(smalloss)
-    ; Winner == p2 -> addpercent(smallwin)
-    ; !
-    ),
   (   Winner == p1 -> NewP1Stack is P1Stack + Pot, NewP2Stack is P2Stack, format('Player one Wins~n', [])
     ; Winner == p2 -> NewP2Stack is P2Stack + Pot, NewP1Stack is P1Stack, format('Player two Wins~n', [])
     ; NewP1Stack is P1Stack + Pot / 2, NewP2Stack is P2Stack + Pot / 2, format('It is a tie~n', [])
     ), !.
 
-
+%uncomment to change threshold when playing bot vs bot
 %addpercent used to change the value of the ai's threshold big wins now at 67%, smallwins at 55%, the threshold will stay the same if this is upheld.
-addpercent(bigwin) :-
+/*addpercent(bigwin) :-
   open('bet.txt', read, Stream),
   read(Stream, Percent),
   NewPercent is Percent - 14,
@@ -176,4 +171,4 @@ addtable(Stack) :-
   close(Stream1),
   open('table1.txt', append, Stream2),
   format(Stream2, '~d, ~d~n', [Stack, Percent]),
-  close(Stream2).
+  close(Stream2).*/

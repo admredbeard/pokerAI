@@ -1,4 +1,4 @@
-:-module(proBotsOnline, [ai2/4, ai/4, player/4, preflop/2, flop/3, turn/3, river/3]).
+:-module(proBotsOnline, [ai2/4, ai/4, player/4, preflop/2, flop/4, turn/3, river/3]).
 :-use_module(readwrite).
 :-use_module(pokerrules).
 :-use_module(saver).
@@ -24,7 +24,7 @@ ai(Turn, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call
   (   Next == 0 -> preflop(P1, Winrate)
     ; flop(Next, P1, Cards, Winrate)
   ),
-  DoBet = 0.7,
+  DoBet = 0.4,
   DoFold = 0.25,
   (   Winrate >  DoBet -> bet(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
     ; Winrate =<  DoBet, Winrate > DoFold -> actcheck(p1, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
@@ -37,11 +37,12 @@ ai2(Turn, Last_to_act, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_cal
   (   Next == 0 -> preflop(P2, Winrate)
     ; flop(Next, P2, Cards, Winrate)
   ),
+  format('the AI has a handstrength of ~w~n', [Winrate]),
   %uncomment everything for the ai to learn
-  open('bet.txt', read, Stream1),
-  read(Stream1, Percent),
-  close(Stream1),
-  DoBet is Percent / 100000,
+  %open('bet.txt', read, Stream1),
+  %read(Stream1, Percent),
+  %close(Stream1),,
+  DoBet = 0.59, %is Percent / 100000,
   DoFold = 0.25,
   (   Winrate >=  DoBet -> bet(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)
     ; Winrate <  DoBet, Winrate > DoFold -> actcheck(p2, [First, P1, P2, P1Stack, P2Stack, Cards, Pot, Big, To_call, Raises], Newtable, Last_to_act)

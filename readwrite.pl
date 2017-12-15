@@ -1,4 +1,4 @@
-:-module(readwrite, [addtodatabase/5, file_name/2]).
+:-module(readwrite, [addtodatabase/2, file_name/2]).
 :-use_module(library(file_systems)).
 :-use_module(library(codesio)).
 :-use_module(pokerrules).
@@ -6,7 +6,12 @@
 :-use_module(saver).
 
 %addtodatabase(+P1, +P2, +Flop, +Turn, +River) adding cards with its stats to the database
-addtodatabase(P1, P2, Flop, Turn, River) :-
+addtodatabase(Deck, Shuffled) :-
+  shuffleDeck(Deck, Shuffled),
+  dealhands(P1, P2, Shuffled, R),
+  dealflop(Flop, R, Re),
+  dealturn(Turn, Re, Res),
+  dealriver(River, Res),
   playersevenCards(P1, Flop, Turn, River, P1seven),                     %appending the cards
   playersevenCards(P2, Flop, Turn, River, P2seven),
   playersixCards(P1, Flop, Turn, P1six),
